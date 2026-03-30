@@ -75,6 +75,14 @@ CREATE TABLE IF NOT EXISTS chat_context (
 );
 """
 
+_CREATE_CHAT_SETTINGS = """
+CREATE TABLE IF NOT EXISTS chat_settings (
+    chat_id INTEGER PRIMARY KEY,
+    languages TEXT DEFAULT 'ko',
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+"""
+
 
 async def init_db():
     os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
@@ -83,6 +91,7 @@ async def init_db():
         await db.execute(_CREATE_ACTION_ITEMS)
         await db.execute(_CREATE_SPEAKER_NAMES)
         await db.execute(_CREATE_CHAT_CONTEXT)
+        await db.execute(_CREATE_CHAT_SETTINGS)
         # FTS5 (검색용)
         await db.execute(_CREATE_MEETINGS_FTS)
         for stmt in _CREATE_FTS_TRIGGERS.strip().split(";"):

@@ -3,10 +3,20 @@ import json
 from utils.llm_client import ask_llm
 from utils.prompts import SUMMARIZER_PROMPT
 
+LANG_LABEL = {
+    "ko": "한국어",
+    "en": "English",
+    "zh": "中文",
+    "cn": "中文",
+    "ja": "日本語",
+}
 
-async def summarize_meeting(parsed_data: dict) -> str:
-    """Sonnet으로 회의 요약 생성"""
-    # 요약용 데이터 (전체 segments는 너무 길 수 있으므로 내용만 압축)
+
+async def summarize_meeting(parsed_data: dict, languages: list[str] | None = None) -> str:
+    """Sonnet으로 회의 요약 생성. language 설정에 따라 출력 언어 변경."""
+    lang = (languages or ["ko"])[0]
+    lang_label = LANG_LABEL.get(lang, "한국어")
+
     summary_input = {
         "date": parsed_data.get("date"),
         "participants": parsed_data.get("participants", []),
@@ -15,13 +25,15 @@ async def summarize_meeting(parsed_data: dict) -> str:
     }
 
     prompt = SUMMARIZER_PROMPT.format(
-        parsed_data=json.dumps(summary_input, ensure_ascii=False, indent=2)
+        lang_instruction=f"{lang_label}로 요약하세요.",
+        multilang_rule="",
+        parsed_data=json.dumps(summary_input, ensure_ascii=False, indent=2),
     )
 
     summary = await ask_llm(
         prompt,
         model="claude-sonnet-4-6",
-        max_tokens=2000,
+        max_tokens=3000,
     )
     return summary.strip()
 

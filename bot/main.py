@@ -3,13 +3,14 @@ import logging
 from telegram import Update
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
 )
 
 from bot.config import TELEGRAM_BOT_TOKEN, LOG_LEVEL
-from bot.handlers.message_handler import handle_message, handle_document
+from bot.handlers.message_handler import handle_message, handle_document, handle_lang_callback
 from bot.handlers.command_handler import (
     cmd_start,
     cmd_help,
@@ -18,6 +19,8 @@ from bot.handlers.command_handler import (
     cmd_meetings,
     cmd_setname,
     cmd_names,
+    cmd_setlang,
+    cmd_lang,
 )
 from storage.database import init_db
 
@@ -49,6 +52,11 @@ def main():
     app.add_handler(CommandHandler("meetings", cmd_meetings))
     app.add_handler(CommandHandler("setname", cmd_setname))
     app.add_handler(CommandHandler("names", cmd_names))
+    app.add_handler(CommandHandler("setlang", cmd_setlang))
+    app.add_handler(CommandHandler("lang", cmd_lang))
+
+    # 언어 선택 버튼 콜백
+    app.add_handler(CallbackQueryHandler(handle_lang_callback, pattern="^lang:"))
 
     # 파일 업로드 핸들러 (.txt 등)
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))

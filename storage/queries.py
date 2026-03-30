@@ -186,6 +186,41 @@ async def set_speaker_name(chat_id: int, label: str, name: str):
         await db.commit()
 
 
+LANG_NAMES = {
+    "ko": "한국어",
+    "en": "English",
+    "zh": "中文",
+    "cn": "中文",
+    "ja": "日本語",
+}
+
+
+async def get_languages(chat_id: int) -> list[str]:
+    """채팅별 출력 언어 설정 반환 (기본: ['ko'])"""
+    async with aiosqlite.connect(get_db_path()) as db:
+        cursor = await db.execute(
+            "SELECT languages FROM chat_settings WHERE chat_id=?", (chat_id,)
+        )
+        row = await cursor.fetchone()
+        if not row:
+            return ["ko"]
+        return [lang.strip() for lang in row[0].split(",") if lang.strip()]
+
+
+async def set_languages(chat_id: int, languages: list[str]) -> None:
+    """채팅별 출력 언어 설정 저장"""
+    async with aiosqlite.connect(get_db_path()) as db:
+        await db.execute(
+            """INSERT INTO chat_settings (chat_id, languages)
+               VALUES (?, ?)
+               ON CONFLICT(chat_id) DO UPDATE SET
+               languages=excluded.languages,
+               updated_at=datetime('now')""",
+            (chat_id, ",".join(languages)),
+        )
+        await db.commit()
+
+
 async def get_speaker_names(chat_id: int) -> dict:
     async with aiosqlite.connect(get_db_path()) as db:
         db.row_factory = aiosqlite.Row
